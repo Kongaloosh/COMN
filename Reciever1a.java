@@ -7,7 +7,7 @@ import java.net.InetAddress;
 
 public class Reciever1a {
 	
-	public static final int PACKET_SIZE = 1024;
+	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	
 	public static final String HOST = "localhost";
 	
