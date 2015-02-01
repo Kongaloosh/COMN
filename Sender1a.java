@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -29,6 +30,12 @@ public class Sender1a {
 	}
 	
 	public void send (){
+		/**
+		 * the total size of the packet at maxmum 1024byte
+		 * 	- 2 byte message sequence number
+		 *  - Byte flag to indicate last message.
+		 *  - 1024byte - 3 byte. 
+		 */
 		try {
 			sock = new DatagramSocket();
 			InetAddress host = InetAddress.getByName(Sender1a.HOST);
@@ -40,22 +47,33 @@ public class Sender1a {
 			int size = file_input_stream.available();
 			int num_packets = size/MAXIMUM_PACKET_SIZE;
 			int packet_length = 0;
-			
+			int number_of_packets = 0;
+			boolean last_packet = false;
 			while (file_input_stream.available() > 0) { //while there's still more to read
 				int remaining_data = file_input_stream.available();
 				
 				//determine how long the packet should be
-				if (remaining_data > MAXIMUM_PACKET_SIZE) {
-					packet_length = MAXIMUM_PACKET_SIZE;
+				if (remaining_data > MAXIMUM_PACKET_SIZE-3) {
+					packet_length = MAXIMUM_PACKET_SIZE-3;
 				}else{
+					// if we don't have a more than 1024 bytes left, we can make the packet smaller
 					packet_length = remaining_data;
+					last_packet = true;
 				}
-				byte[] data = new byte[packet_length];
-				file_input_stream.read(data);
-				System.out.print(data);
+				
+				byte[] data = new byte[packet_length+3]; // we make the array which will hold the packet 
+				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
+				
+				byte[] header = ByteBuffer.allocate(2).putInt(num_packets).array();
+				System.out.print("header" + header.length);
+				data[0] = header[0]; 
+				data[1] = header[1];
+				data[2] = (byte) (last_packet ? 1 : 0); // add the flag to identify if it's the last packet
+				
+				
 				DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number);
 				sock.send(datagram_packet);
-
+				number_of_packets ++;
 			}
 			
 		} catch (Exception e) {
