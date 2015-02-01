@@ -65,7 +65,7 @@ public class Sender1a {
 				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
 				
 				// Assigning values to the headers
-				data[0] = (byte) (num_packets >>> 4);
+				data[0] = (byte) (num_packets >>> 8);
 				data[1] = (byte) num_packets;
 				data[2] = (byte) (last_packet ? 1 : 0); // add the flag to identify if it's the last packet
 				

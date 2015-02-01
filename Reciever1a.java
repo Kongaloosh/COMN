@@ -3,16 +3,16 @@ import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 
 public class Reciever1a {
 	
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
-	
 	public static final String HOST = "localhost";
 	
 	private int port_number;
-	
 	private DatagramSocket sock;
 	
 	public Reciever1a(String host_name, int port_number){
@@ -22,16 +22,18 @@ public class Reciever1a {
 	public void recieve(){
 		try {
 			sock = new DatagramSocket(port_number);
-			byte[] buffer = new byte[65536];
+			byte[] buffer = new byte[65536]; // the maximum size of a buffer. 
 			DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
 			System.out.println("server created. wating for incoming data");
 			
 			while (true) {
 				sock.receive(incoming_packet);
 				byte[]data = incoming_packet.getData();
-				String s = new String(data, 0, incoming_packet.getLength());
-				
-				System.out.println(s);
+				byte[]header = Arrays.copyOfRange(data, 0, 1);
+			
+				int packet_number = 0;
+				int last_packet = (int) data[2];
+				System.out.println("Packet Number " +  packet_number + " is last " + last_packet + " " + data[2]);
 			}
 		} catch (Exception e) {
 			System.out.println(e);
