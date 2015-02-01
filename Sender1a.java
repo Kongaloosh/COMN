@@ -45,9 +45,8 @@ public class Sender1a {
 			
 			// the size of the file
 			int size = file_input_stream.available();
-			int num_packets = size/MAXIMUM_PACKET_SIZE;
 			int packet_length = 0;
-			int number_of_packets = 0;
+			short packet_number = 0; // we use a short, because it's two bytes
 			boolean last_packet = false;
 			while (file_input_stream.available() > 0) { //while there's still more to read
 				int remaining_data = file_input_stream.available();
@@ -65,14 +64,19 @@ public class Sender1a {
 				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
 				
 				// Assigning values to the headers
-				data[0] = (byte) (num_packets >>> 8);
-				data[1] = (byte) num_packets;
+				/**
+				data[0] = (byte) (packet_number >> 8);
+				data[1] = (byte) packet_number; // equivalent to shift of >> 0
+				*/
+				byte[] header = ByteBuffer.allocate(2).putShort(packet_number).array();
+				data[0] = header[0];
+				data[1] = header[1];
 				data[2] = (byte) (last_packet ? 1 : 0); // add the flag to identify if it's the last packet
 				
 				
 				DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number);
 				sock.send(datagram_packet);
-				number_of_packets ++;
+				packet_number ++;
 			}
 			
 		} catch (Exception e) {

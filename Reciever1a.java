@@ -29,11 +29,19 @@ public class Reciever1a {
 			while (true) {
 				sock.receive(incoming_packet);
 				byte[]data = incoming_packet.getData();
-				byte[]header = Arrays.copyOfRange(data, 0, 1);
-			
-				int packet_number = 0;
+				/**
+				int lsb = data[0] & 0xFF;
+				int msb = data[1] & 0xFF;
+				int packet_number =  lsb + (msb << 8);
+				*/
+				byte[] header = Arrays.copyOfRange(data, 0, 2);
+//				System.out.print(header.length + " " + header[0]);
+				short packet_number = ByteBuffer.wrap(header).getShort();
 				int last_packet = (int) data[2];
-				System.out.println("Packet Number " +  packet_number + " is last " + last_packet + " " + data[2]);
+				System.out.print("Here");
+				System.out.println(packet_number+ " " +last_packet);
+				//				System.out.println("Packet Number " +  packet_number + " " + lsb + "is last " + last_packet + " " + data[2]);
+//				System.out.println("buff" + buffer[0]);
 			}
 		} catch (Exception e) {
 			System.out.println(e);
