@@ -64,10 +64,9 @@ public class Sender1a {
 				byte[] data = new byte[packet_length+3]; // we make the array which will hold the packet 
 				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
 				
-				byte[] header = ByteBuffer.allocate(2).putInt(num_packets).array();
-				System.out.print("header" + header.length);
-				data[0] = header[0]; 
-				data[1] = header[1];
+				// Assigning values to the headers
+				data[0] = (byte) (num_packets >>> 4);
+				data[1] = (byte) num_packets;
 				data[2] = (byte) (last_packet ? 1 : 0); // add the flag to identify if it's the last packet
 				
 				
