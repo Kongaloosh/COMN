@@ -20,8 +20,11 @@ public class Sender1a {
 	public static final int MAXIMUM_PACKET_SIZE = 1024; //in bytes => 1KB
 	private static final String HOST = "localhost";
 	private static final String FILE = "test.jpg";
+	
 	private int port_number;
 	private DatagramSocket sock = null;
+	private boolean debug = true;
+	
 	//private FileInputStream file_reader;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 	
@@ -30,24 +33,18 @@ public class Sender1a {
 	}
 	
 	public void send (){
-		/**
-		 * the total size of the packet at maxmum 1024byte
-		 * 	- 2 byte message sequence number
-		 *  - Byte flag to indicate last message.
-		 *  - 1024byte - 3 byte. 
-		 */
 		try {
 			sock = new DatagramSocket();
 			InetAddress host = InetAddress.getByName(Sender1a.HOST);
-
+			
 			// read in the image to be sent
 			FileInputStream file_input_stream = new FileInputStream(FILE);
 			
-			// the size of the file
-			int size = file_input_stream.available();
-			int packet_length = 0;
+			int packet_length = 0; // the length of the current packet
 			short packet_number = 0; // we use a short, because it's two bytes
-			boolean last_packet = false;
+			boolean last_packet = false; // notes whether this is the last packet to transfer
+			int num_bytes_sent = 0;
+			
 			while (file_input_stream.available() > 0) { //while there's still more to read
 				int remaining_data = file_input_stream.available();
 				
@@ -62,21 +59,26 @@ public class Sender1a {
 				
 				byte[] data = new byte[packet_length+3]; // we make the array which will hold the packet 
 				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
+				num_bytes_sent += packet_length;
+				
 				
 				// Assigning values to the headers
-				/**
-				data[0] = (byte) (packet_number >> 8);
-				data[1] = (byte) packet_number; // equivalent to shift of >> 0
-				*/
 				byte[] header = ByteBuffer.allocate(2).putShort(packet_number).array();
 				data[0] = header[0];
 				data[1] = header[1];
 				data[2] = (byte) (last_packet ? 1 : 0); // add the flag to identify if it's the last packet
 				
-				
 				DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number);
 				sock.send(datagram_packet);
+				
+				if (debug)
+					System.out.println(
+							"number of bytes sent: " + num_bytes_sent +
+							"\n number of packets sent: " + packet_number +
+							"\n packet length:  " + packet_length+
+							"\n ********************************");
 				packet_number ++;
+				Thread.sleep(20);
 			}
 			
 		} catch (Exception e) {
