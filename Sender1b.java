@@ -60,6 +60,10 @@ public class Sender1b {
 					last_packet = true;
 				}
 				
+				while (num_unaknowledged_packets == n) {
+					check_for_acknowledgements();
+				}
+				
 				byte[] data = new byte[packet_length+3]; // we make the array which will hold the packet 
 				file_input_stream.read(data, 3, packet_length); // we offset by three as we need a 3byte header
 				num_bytes_sent += packet_length;
@@ -80,31 +84,27 @@ public class Sender1b {
 							"\n packet length:  " + packet_length+
 							"\n ********************************");
 				packet_number ++;
-				boolean is_aknowledged = false;
-				while (!is_aknowledged){
-					is_aknowledged = check_for_acknowledgements();
-				}
+				num_unaknowledged_packets ++;
+				check_for_acknowledgements();
 				Thread.sleep(20);
 			}
+			
+			
 		} catch (Exception e) {
 			System.out.print(e);
 		}			
 	}
 	
-	public boolean check_for_acknowledgements() throws Exception {
-		System.out.println("acknowledgement");	
+	public void check_for_acknowledgements() throws Exception {
+		System.out.print("acknowledgement");	
 		byte[] buffer = new byte[2]; // short for acknowledgement.
 		DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
-		System.out.println("here");
-		sock.setSoTimeout(10);
 		sock.receive(incoming_packet);
-		System.out.println("here");
 		byte[]data = incoming_packet.getData();
 		if (ByteBuffer.wrap(data).getShort() == 1){
+			num_unaknowledged_packets -= 1;
 			System.out.println("Acknowledgement Recieved");
-			return true;
 		}
-		return false;
 	}
 	
 	public static void main(String args[]){
