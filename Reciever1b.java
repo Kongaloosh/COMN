@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -16,27 +15,24 @@ public class Reciever1b {
 	public static final String HOST = "localhost";
 
 	private int port_number;
+	private DatagramSocket sock;
 	private InetAddress host;
-	private DatagramSocket accepting_sock;
-	private DatagramSocket sending_sock;
-	
+
 	private boolean debug = true;
 
-	public Reciever1b(String host_name, int port_number) throws Exception{
+	public Reciever1b(String host_name, int port_number) {
 		this.port_number = port_number;
-		this.host = InetAddress.getByName(Reciever1b.HOST);
-		accepting_sock = new DatagramSocket(null);
-		sending_sock = new DatagramSocket(null);
-		accepting_sock.setReuseAddress(true);
-		sending_sock.setReuseAddress(true);
+		try {
+			this.host = InetAddress.getByName(Reciever1b.HOST);
+		} catch (Exception e) {
+			System.out.print(e);
+		}
+
 	}
 
 	public void recieve() {
 		try {
-			accepting_sock.setReuseAddress(true);
-			accepting_sock = new DatagramSocket(port_number);
-			sending_sock = new DatagramSocket();
-			
+			sock = new DatagramSocket(port_number);
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
 			File file = new File("recieved_image.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
@@ -46,7 +42,7 @@ public class Reciever1b {
 
 			while (true) {
 				// recieve the newest packet
-				accepting_sock.receive(incoming_packet);
+				sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 
 				// get the header from the most recent packet
@@ -98,7 +94,7 @@ public class Reciever1b {
 		byte[] data = new byte[1]; 
 		data[0] = (byte) 1;
 		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number);
-		sending_sock.send(datagram_packet);
+		sock.send(datagram_packet);
 		System.out.println("Acknowledged Packet");
 	}
 

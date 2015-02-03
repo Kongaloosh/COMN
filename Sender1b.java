@@ -15,6 +15,7 @@ public class Sender1b {
 	private static final String FILE = "test.jpg";
 
 	private int port_number;
+	private DatagramSocket sock = null;
 	private boolean debug = true;
 
 	// private FileInputStream file_reader;
@@ -24,27 +25,20 @@ public class Sender1b {
 	private int n;
 	private int num_unaknowledged_packets = 0;
 
-	private DatagramSocket sock;
-	private DatagramSocket accepting_sock; 
-	
-	public Sender1b(String host, int port_number, int n) throws Exception{
+	public Sender1b(String host, int port_number, int n) {
 		this.port_number = port_number;
 		this.n = n;
-		this.host = InetAddress.getByName(Sender1b.HOST);
-		sock = new DatagramSocket(null);
-		accepting_sock = new DatagramSocket(null);
-		sock.setReuseAddress(true);
-		accepting_sock.setReuseAddress(true);
-		System.out.println("here");
+		try {
+			this.host = InetAddress.getByName(Sender1b.HOST);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 	}
 
 	public void send() {
 		try {
-			System.out.println("here");
 			sock = new DatagramSocket();
-			System.out.println("here");
-			accepting_sock = new DatagramSocket(port_number);
-			System.out.println("here");
+
 			// read in the image to be sent
 			FileInputStream file_input_stream = new FileInputStream(FILE);
 
@@ -116,9 +110,9 @@ public class Sender1b {
 		System.out.print("acknowledgement");	
 		byte[] buffer = new byte[2]; // short for acknowledgement.
 		DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
-		accepting_sock.setSoTimeout(100);
+		sock.setSoTimeout(100);
 		try {
-			accepting_sock.receive(incoming_packet);
+			sock.receive(incoming_packet);
 			byte[]data = incoming_packet.getData();
 			if (ByteBuffer.wrap(data).getShort() == 1){
 				System.out.println("Acknowledgement Recieved");
@@ -131,7 +125,7 @@ public class Sender1b {
 		return false;
 	}
 
-	public static void main(String args[]) throws Exception{
+	public static void main(String args[]) {
 		Sender1b sender1b = new Sender1b(Sender1b.HOST, 7777, 1);
 		sender1b.send();
 	}
