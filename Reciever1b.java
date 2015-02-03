@@ -15,10 +15,12 @@ public class Reciever1b {
 	public static final String HOST = "localhost";
 
 	private int port_number;
-	private DatagramSocket sock;
+	private DatagramSocket recieving_sock;
+	private DatagramSocket sending_sock;
 	private InetAddress host;
 
 	private boolean debug = true;
+	
 
 	public Reciever1b(String host_name, int port_number) {
 		this.port_number = port_number;
@@ -32,22 +34,18 @@ public class Reciever1b {
 
 	public void recieve() {
 		try {
-			sock = new DatagramSocket(port_number);
-
+			recieving_sock = new DatagramSocket(port_number);
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
-															// of a buffer.
-
 			File file = new File("recieved_image.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
-
-			DatagramPacket incoming_packet = new DatagramPacket(buffer,
-					buffer.length);
-
+			DatagramPacket incoming_packet = new DatagramPacket(buffer,	buffer.length);
 			int num_bytes_recieved = 0;
+			int last_packet_number = -1;
 
 			while (true) {
+				System.out.print("starting server");
 				// recieve the newest packet
-				sock.receive(incoming_packet);
+				recieving_sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 
 				// get the header from the most recent packet
@@ -56,33 +54,39 @@ public class Reciever1b {
 				// identify the packet number
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
-				// find the flag byte
-				int last_packet = (int) data[2];
+				if (last_packet_number == packet_number){
+					send_acknowledgement();
+				}else{
+					// find the flag byte
+					int last_packet = (int) data[2];
 
-				// write the packet data to file.
-				file_output_stream.write(data, 3, data.length - 3);
+					// write the packet data to file.
+					file_output_stream.write(data, 3, data.length - 3);
 
-				// keep track of the bytes recieved for debug
-				num_bytes_recieved += data.length - 3;
+					// keep track of the bytes recieved for debug
+					num_bytes_recieved += data.length - 3;
 
-				// print for debug
-				if (debug) {
-					System.out.println(" number of bytes recieved: "
-							+ num_bytes_recieved
-							+ "\n recieved packet number: " + packet_number
-							+ "\n of length " + (data.length - 3)
-							+ "\n and the bit flag is " + last_packet
-							+ "\n ********************************");
+					// print for debug
+					if (debug) {
+						System.out.println(" number of bytes recieved: "
+								+ num_bytes_recieved
+								+ "\n recieved packet number: " + packet_number
+								+ "\n of length " + (data.length - 3)
+								+ "\n and the bit flag is " + last_packet
+								+ "\n ********************************");
+					}
+					
+					// send the client an acknowledgment of recipt
+					send_acknowledgement();
+					Thread.sleep(20);
+
+					// if this is the last packet, shut everything down
+					if (last_packet == 1) {
+						file_output_stream.close();
+						System.exit(1);
+					}
 				}
-				
-				// send the client an acknowledgment of recipt
-				//send_acknowledgement();
-
-				// if this is the last packet, shut everything down
-				if (last_packet == 1) {
-					file_output_stream.close();
-					System.exit(1);
-				}
+				last_packet_number = packet_number;
 			}
 		} catch (Exception e) {
 			System.out.println(e);
@@ -90,15 +94,16 @@ public class Reciever1b {
 	}
 
 	public void send_acknowledgement() throws Exception {
+		sending_sock = new DatagramSocket();
 		byte[] data = new byte[1]; 
 		data[0] = (byte) 1;
-		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number);
-		sock.send(datagram_packet);
+		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number+1);
+		sending_sock.send(datagram_packet);
 		System.out.println("Acknowledged Packet");
 	}
 
 	public static void main(String args[]) throws Exception {
-		Reciever1b reciever1b = new Reciever1b(HOST, 7777);
+		Reciever1b reciever1b = new Reciever1b(Reciever1b.HOST, 7777);
 		System.out.println("server starting");
 		reciever1b.recieve();
 	}
