@@ -35,6 +35,7 @@ public class Reciever1b {
 	public void recieve() {
 		try {
 			recieving_sock = new DatagramSocket(port_number);
+			sending_sock = new DatagramSocket();
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
 			File file = new File("recieved_image.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
@@ -94,7 +95,6 @@ public class Reciever1b {
 	}
 
 	public void send_acknowledgement() throws Exception {
-		sending_sock = new DatagramSocket();
 		byte[] data = new byte[1]; 
 		data[0] = (byte) 1;
 		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number+1);

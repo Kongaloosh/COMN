@@ -39,7 +39,7 @@ public class Sender1b {
 	public void send() {
 		try {
 			sending_sock = new DatagramSocket();
-
+			recieving_sock = new DatagramSocket(port_number+1);
 			// read in the image to be sent
 			FileInputStream file_input_stream = new FileInputStream(FILE);
 
@@ -97,6 +97,7 @@ public class Sender1b {
 				boolean is_acknowledged = false;
 				while(!is_acknowledged){
 					is_acknowledged = check_for_acknowledgements();
+					sending_sock.send(datagram_packet);
 					Thread.sleep(20);
 				}
 				Thread.sleep(20);
@@ -108,16 +109,15 @@ public class Sender1b {
 	}
 
 	public boolean check_for_acknowledgements() throws Exception {
-		recieving_sock = new DatagramSocket(port_number+1);
-		System.out.print("acknowledgement");	
+		System.out.println("acknowledgement");	
 		byte[] buffer = new byte[2]; // short for acknowledgement.
 		DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
 		recieving_sock.setSoTimeout(100);
 		try {
+			System.out.println("Acknowledgement Recieved");
 			recieving_sock.receive(incoming_packet);
 			byte[]data = incoming_packet.getData();
 			if (ByteBuffer.wrap(data).getShort() == 1){
-				System.out.println("Acknowledgement Recieved");
 				return true;
 			}
 		}catch(SocketTimeoutException ste){
