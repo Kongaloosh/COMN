@@ -74,8 +74,7 @@ public class Reciever1a {
 	}
 
 	public static void main(String args[]) throws Exception {
-		echo("out");
-		Reciever1a reciever1a = new Reciever1a(HOST, 7777);
+		Reciever1a reciever1a = new Reciever1a(Reciever1a.HOST, 7777);
 		System.out.println("server starting");
 		reciever1a.recieve();
 	}

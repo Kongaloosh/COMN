@@ -46,6 +46,7 @@ public class Reciever1b {
 			int num_bytes_recieved = 0;
 
 			while (true) {
+				// recieve the newest packet
 				sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 
@@ -61,8 +62,10 @@ public class Reciever1b {
 				// write the packet data to file.
 				file_output_stream.write(data, 3, data.length - 3);
 
+				// keep track of the bytes recieved for debug
 				num_bytes_recieved += data.length - 3;
 
+				// print for debug
 				if (debug) {
 					System.out.println(" number of bytes recieved: "
 							+ num_bytes_recieved
@@ -71,14 +74,15 @@ public class Reciever1b {
 							+ "\n and the bit flag is " + last_packet
 							+ "\n ********************************");
 				}
+				
+				// send the client an acknowledgment of recipt
+				//send_acknowledgement();
 
-				send_acknowledgement();
-
+				// if this is the last packet, shut everything down
 				if (last_packet == 1) {
 					file_output_stream.close();
 					System.exit(1);
 				}
-
 			}
 		} catch (Exception e) {
 			System.out.println(e);
