@@ -33,17 +33,12 @@ public class Reciever1b {
 	public void recieve() {
 		try {
 			sock = new DatagramSocket(port_number);
-
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
-															// of a buffer.
-
 			File file = new File("recieved_image.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
-
-			DatagramPacket incoming_packet = new DatagramPacket(buffer,
-					buffer.length);
-
+			DatagramPacket incoming_packet = new DatagramPacket(buffer,	buffer.length);
 			int num_bytes_recieved = 0;
+			int last_packet_number = -1;
 
 			while (true) {
 				// recieve the newest packet
@@ -56,33 +51,39 @@ public class Reciever1b {
 				// identify the packet number
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
-				// find the flag byte
-				int last_packet = (int) data[2];
+				if (last_packet_number == packet_number){
+					send_acknowledgement();
+				}else{
+					// find the flag byte
+					int last_packet = (int) data[2];
 
-				// write the packet data to file.
-				file_output_stream.write(data, 3, data.length - 3);
+					// write the packet data to file.
+					file_output_stream.write(data, 3, data.length - 3);
 
-				// keep track of the bytes recieved for debug
-				num_bytes_recieved += data.length - 3;
+					// keep track of the bytes recieved for debug
+					num_bytes_recieved += data.length - 3;
 
-				// print for debug
-				if (debug) {
-					System.out.println(" number of bytes recieved: "
-							+ num_bytes_recieved
-							+ "\n recieved packet number: " + packet_number
-							+ "\n of length " + (data.length - 3)
-							+ "\n and the bit flag is " + last_packet
-							+ "\n ********************************");
+					// print for debug
+					if (debug) {
+						System.out.println(" number of bytes recieved: "
+								+ num_bytes_recieved
+								+ "\n recieved packet number: " + packet_number
+								+ "\n of length " + (data.length - 3)
+								+ "\n and the bit flag is " + last_packet
+								+ "\n ********************************");
+					}
+					
+					// send the client an acknowledgment of recipt
+					send_acknowledgement();
+					Thread.sleep(20);
+
+					// if this is the last packet, shut everything down
+					if (last_packet == 1) {
+						file_output_stream.close();
+						System.exit(1);
+					}
 				}
-				
-				// send the client an acknowledgment of recipt
-				//send_acknowledgement();
-
-				// if this is the last packet, shut everything down
-				if (last_packet == 1) {
-					file_output_stream.close();
-					System.exit(1);
-				}
+				last_packet_number = packet_number;
 			}
 		} catch (Exception e) {
 			System.out.println(e);
