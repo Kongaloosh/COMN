@@ -20,13 +20,19 @@ public class Sender1b {
 	
 	//private FileInputStream file_reader;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
-
+	private InetAddress host;
+	
 	private int n;
 	private int num_unaknowledged_packets = 0;
 	
 	public Sender1b(String host, int port_number, int n){
 		this.port_number = port_number;
 		this.n = n;
+		try {
+			this.host = InetAddress.getByName(Sender1b.HOST);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 	}
 	
 	public void send (){
@@ -89,17 +95,15 @@ public class Sender1b {
 		}			
 	}
 	
-	public void check_for_acknowledgements() {
-		try {
-			sock = new DatagramSocket(port_number);
-			byte[] buffer = new byte[2]; // short for acknowledgement.
-			DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
-			sock.receive(incoming_packet);
-			byte[]data = incoming_packet.getData();
-			if (ByteBuffer.wrap(data).getShort() == 1)
-				num_unaknowledged_packets -= 1;
-		} catch (Exception e) {
-			System.out.println(e);
+	public void check_for_acknowledgements() throws Exception {
+		System.out.print("acknowledgement");	
+		byte[] buffer = new byte[2]; // short for acknowledgement.
+		DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
+		sock.receive(incoming_packet);
+		byte[]data = incoming_packet.getData();
+		if (ByteBuffer.wrap(data).getShort() == 1){
+			num_unaknowledged_packets -= 1;
+			System.out.println("Acknowledgement Recieved");
 		}
 	}
 	

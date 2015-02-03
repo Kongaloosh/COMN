@@ -32,7 +32,6 @@ public class Sender1a {
 	
 	public Sender1a(String host, int port_number){
 		this.port_number = port_number;
-		this.host = InetAddress host = InetAddress.getByName(Sender1b.HOST);
 	}
 	
 	public void send (){
