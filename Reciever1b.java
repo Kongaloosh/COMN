@@ -37,14 +37,13 @@ public class Reciever1b {
 			recieving_sock = new DatagramSocket(port_number);
 			sending_sock = new DatagramSocket();
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
-			File file = new File("recieved_image.jpg");
+			File file = new File("recieved_image_b.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
 			DatagramPacket incoming_packet = new DatagramPacket(buffer,	buffer.length);
 			int num_bytes_recieved = 0;
 			int last_packet_number = -1;
 
 			while (true) {
-				System.out.print("starting server");
 				// recieve the newest packet
 				recieving_sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
@@ -56,7 +55,7 @@ public class Reciever1b {
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
 				if (last_packet_number == packet_number){
-					send_acknowledgement();
+					send_acknowledgement(packet_number);
 				}else{
 					// find the flag byte
 					int last_packet = (int) data[2];
@@ -78,7 +77,7 @@ public class Reciever1b {
 					}
 					
 					// send the client an acknowledgment of recipt
-					send_acknowledgement();
+					send_acknowledgement(packet_number);
 					Thread.sleep(20);
 
 					// if this is the last packet, shut everything down
@@ -94,12 +93,11 @@ public class Reciever1b {
 		}
 	}
 
-	public void send_acknowledgement() throws Exception {
-		byte[] data = new byte[1]; 
-		data[0] = (byte) 1;
+	public void send_acknowledgement(short packet_number) throws Exception {
+		byte[] data = new byte[2]; 
+		data = ByteBuffer.allocate(2).putShort(packet_number).array();
 		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number+1);
 		sending_sock.send(datagram_packet);
-		System.out.println("Acknowledged Packet");
 	}
 
 	public static void main(String args[]) throws Exception {
