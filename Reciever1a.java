@@ -14,13 +14,17 @@ public class Reciever1a {
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	public static final String HOST = "localhost";
 
+	private String file_name;
+	
 	private int port_number;
 	private DatagramSocket sock;
 
 	private boolean debug = true;
 
-	public Reciever1a(String host_name, int port_number) {
+
+	public Reciever1a(int port_number, String file_name) {
 		this.port_number = port_number;
+		this.file_name = file_name;
 	}
 
 	public void recieve() {
@@ -33,7 +37,7 @@ public class Reciever1a {
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; 
 			
 			// where the file will be stored and the file writed
-			File file = new File("recieved_image.jpg");
+			File file = new File(file_name);
 			FileOutputStream file_output_stream = new FileOutputStream(file);
 
 			// the recieved packet
@@ -87,25 +91,20 @@ public class Reciever1a {
 	}
 
 	public static void main(String args[]) throws Exception {
+		/**
+		 * java ReceiverX <Port> <Filename>
+		 */
 		if(args.length == 2){ // valid arguments, specify host
 			
 			int port_number = Integer.parseInt(args[0]);
-			String host = args[1];
-			Reciever1a reciever1a = new Reciever1a(host, port_number);
-			reciever1a.recieve();
-		
-		}else if (args.length == 1){ // valid arguments, default host
-		
-			int port_number = Integer.parseInt(args[0]);
-			Reciever1a reciever1a = new Reciever1a(Reciever1a.HOST, port_number);
+			String file_name = args[1];
+			Reciever1a reciever1a = new Reciever1a(port_number, file_name);
 			reciever1a.recieve();
 		
 		}else{ // invalid arguments
 			System.out.println(
-					"Usage: \n" +
-					" Reciever1a <port number> <host> \n" +
-					"\n or for default localhost \n" +
-					" Reciever1a <port number> ");
+					"Usage: \n" + 
+					"java Receiver1a <Port> <Filename>");
 		}
 	}
 }

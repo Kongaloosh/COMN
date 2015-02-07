@@ -12,6 +12,9 @@ public class Sender1a {
 	
 	private int port_number;
 	private DatagramSocket sock = null;
+	
+	private String file_name;
+	
 	private boolean debug = true;
 	
 	private InetAddress host;
@@ -19,9 +22,9 @@ public class Sender1a {
 	//private FileInputStream file_reader;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 	
-	public Sender1a(String host_name, int port_number){
+	public Sender1a(String host_name, int port_number, String file_name){
 		this.port_number = port_number;
-		
+		this.file_name = file_name;
 		try {
 			this.host = InetAddress.getByName(host_name);
 		} catch (Exception e) {
@@ -35,7 +38,7 @@ public class Sender1a {
 			
 			
 			// read in the image to be sent
-			FileInputStream file_input_stream = new FileInputStream(FILE);
+			FileInputStream file_input_stream = new FileInputStream(file_name);
 			
 			int packet_length = 0; // the length of the current packet
 			short packet_number = 0; // we use a short, because it's two bytes
@@ -84,25 +87,21 @@ public class Sender1a {
 	}
 	
 	public static void main(String args[]){
-		if(args.length == 2){ // valid arguments, specify host
+		/**
+		 * java SenderX localhost <Port> <Filename>
+		 */
+		if(args.length == 3){ // valid arguments, specify host
 			
-			int port_number = Integer.parseInt(args[0]);
-			String host = args[1];
-			Sender1a sender1a = new Sender1a(host, port_number);
-			sender1a.send();
-			
-		}else if (args.length == 1){ // valid arguments, default host
-			
-			int port_number = Integer.parseInt(args[0]);
-			Sender1a sender1a= new Sender1a(Sender1a.HOST, port_number);
+			String host = args[0];
+			int port_number = Integer.parseInt(args[1]);
+			String file_name = args[2];
+			Sender1a sender1a = new Sender1a(host, port_number, file_name);
 			sender1a.send();
 		
 		}else{ // invalid arguments
 			System.out.println(
 					"Usage: \n" +
-					" Sender1a <port number> <host> \n" +
-					"\n or for default localhost \n" +
-					" Sender1a <port number> ");
+					"Sender1a localhost <port> <filename>");
 		}
 	}
 }
