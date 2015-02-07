@@ -8,13 +8,19 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-
+/**
+ * Matric Number: s1210313
+ */
 public class Reciever1b {
 
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	public static final String HOST = "localhost";
 
 	private int port_number;
+	private String host_name;
+	private String file_name;
+	private int retry_timeout;
+	
 	private DatagramSocket recieving_sock;
 	private DatagramSocket sending_sock;
 	private InetAddress host;
@@ -22,14 +28,9 @@ public class Reciever1b {
 	private boolean debug = true;
 	
 
-	public Reciever1b(String host_name, int port_number) {
+	public Reciever1b(int port_number, String file_name) {
 		this.port_number = port_number;
-		try {
-			this.host = InetAddress.getByName(host_name);
-		} catch (Exception e) {
-			System.out.print(e);
-		}
-
+		this.file_name = file_name;
 	}
 
 	public void recieve() {
@@ -46,7 +47,7 @@ public class Reciever1b {
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE];
 			
 			// The file and the new output stream
-			File file = new File("recieved_image_b.jpg");
+			File file = new File(file_name);
 			FileOutputStream file_output_stream = new FileOutputStream(file);
 			
 			// New datagram packets
@@ -63,6 +64,12 @@ public class Reciever1b {
 				// recieve the newest packet
 				recieving_sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
+				
+				try {
+					host = incoming_packet.getAddress();
+				} catch (Exception e) {
+					System.out.print(e);
+				}
 
 				// get the header from the most recent packet
 				byte[] header = Arrays.copyOfRange(data, 0, 2);
@@ -124,25 +131,20 @@ public class Reciever1b {
 	}
 
 	public static void main(String args[]) throws Exception {
+		/**
+		 * java ReceiverX <Port> <Filename>
+		 */
 		if(args.length == 2){ // valid arguments, specify host
 			
 			int port_number = Integer.parseInt(args[0]);
-			String host = args[1];
-			Reciever1b reciever1b = new Reciever1b(host, port_number);
-			reciever1b.recieve();
-		
-		}else if (args.length == 1){ // valid arguments, default host
-		
-			int port_number = Integer.parseInt(args[0]);
-			Reciever1b reciever1b = new Reciever1b(Reciever1b.HOST, port_number);
+			String file_name = args[1];
+			Reciever1b reciever1b = new Reciever1b(port_number, file_name);
 			reciever1b.recieve();
 		
 		}else{ // invalid arguments
 			System.out.println(
-					"Usage: \n" +
-					" Reciever1b <port number> <host> \n" +
-					" or for default localhost \n" +
-					" Reciever1b <port number> ");
+					"Usage: \n" + 
+					"java Receiver1b <Port> <Filename>");
 		}
 	}
 }

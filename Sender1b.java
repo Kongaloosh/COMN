@@ -19,8 +19,11 @@ public class Sender1b {
 	// the file to be sent
 	private static final String FILE = "test.jpg";
 
-	// the specified port number
+	// the arguments
 	private int port_number;
+	private String host_name;
+	private String file_name;
+	private int retry_timeout;
 
 	// the specified host
 	private InetAddress host;
@@ -38,13 +41,17 @@ public class Sender1b {
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 	
 
-	public Sender1b(String host, int port_number) {
+	public Sender1b(String host_name, int port_number, String file_name, int retry_timeout ) {
 		this.port_number = port_number;
+		this.host_name = host_name;
+		this.file_name = file_name;
+		this.retry_timeout = retry_timeout;
 		try {
-			this.host = InetAddress.getByName(host);
+			this.host = InetAddress.getByName(host_name);
 		} catch (Exception e) {
-			System.out.println(e);
+			System.out.print(e);
 		}
+
 	}
 
 	public void send() {
@@ -54,7 +61,7 @@ public class Sender1b {
 			recieving_sock = new DatagramSocket(port_number+1);
 			
 			// read in the image to be sent
-			FileInputStream file_input_stream = new FileInputStream(FILE);
+			FileInputStream file_input_stream = new FileInputStream(file_name);
 
 			// the length of the current packet
 			int packet_length = 0; 
@@ -147,7 +154,8 @@ public class Sender1b {
 		
 		DatagramPacket incoming_packet = new DatagramPacket(buffer, buffer.length);
 		
-		recieving_sock.setSoTimeout(100);
+		// set's the time the socket can be open before it times-out
+		recieving_sock.setSoTimeout(retry_timeout);
 		
 		try {
 			recieving_sock.receive(incoming_packet);
@@ -163,26 +171,23 @@ public class Sender1b {
 		return false;
 	}
 
-	public static void main(String args[]) {
-		if(args.length == 2){ // valid arguments, specify host
+	public static void main(String args[]) throws Exception {
+		/**
+		 * java SenderX localhost <Port> <Filename> [RetryTimeout]
+		 */
+		if(args.length == 4){ // valid arguments, specify host
 			
-			int port_number = Integer.parseInt(args[0]);;
-			String host = args[1];
-			Sender1b sender1b = new Sender1b(host, port_number);
-			sender1b.send();
-			
-		}else if (args.length == 1){ // valid arguments, default host
-			
-			int port_number = Integer.parseInt(args[0]);
-			Sender1b sender1b= new Sender1b(Sender1b.HOST, port_number);
+			String host = args[0];			
+			int port_number = Integer.parseInt(args[1]);
+			String file_name = args[2];
+			int retry_timeout = Integer.parseInt(args[3]);
+			Sender1b sender1b = new Sender1b(host,port_number,file_name,retry_timeout);
 			sender1b.send();
 		
 		}else{ // invalid arguments
 			System.out.println(
 					"Usage: \n" +
-					" Sender1b <port number> <host> \n" +
-					"\n or for default localhost \n" +
-					" Sender1b <port number> ");
+					" java Sender1b localhost <Port> <Filename> [RetryTimeout]");
 		}
 	}
 }
