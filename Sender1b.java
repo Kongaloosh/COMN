@@ -37,6 +37,8 @@ public class Sender1b {
 	// for printing debug
 	private boolean debug = true;
 
+	private int retransmissions = 0;
+	private int starttime = 0;
 	// for reading the file to send in
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 	
@@ -46,6 +48,7 @@ public class Sender1b {
 		this.host_name = host_name;
 		this.file_name = file_name;
 		this.retry_timeout = retry_timeout;
+		this.starttime = System.currentTimeMillis();
 		try {
 			this.host = InetAddress.getByName(host_name);
 		} catch (Exception e) {
@@ -121,10 +124,12 @@ public class Sender1b {
 				sending_sock.send(datagram_packet);
 					
 				if (debug)
-					System.out.println("number of bytes sent: "
-							+ num_bytes_sent + "\n number of packets sent: "
-							+ packet_number + "\n packet length:  "
-							+ packet_length
+					System.out.println(
+							"number of bytes sent: " + num_bytes_sent
+							+ "\n number of packets sent: " + packet_number
+							+ "\n packet length:  " + packet_length +
+							+ "\n number of retransmissions" + retransmissions
+							+ "\n transmission rate " + ((System.currentTimeMillis()-starttime)/num_bytes_sent)/1000
 							+ "\n ********************************");
 				
 				// Enter the wait for ack state
