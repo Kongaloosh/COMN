@@ -10,23 +10,38 @@ import org.omg.CORBA.PUBLIC_MEMBER;
 public class Sender1b {
 	// server for 1b.
 
-	public static final int MAXIMUM_PACKET_SIZE = 1024; // in bytes => 1KB
+	// the maximum packet size
+	public static final int MAXIMUM_PACKET_SIZE = 1024;
+	
+	// the default host
 	private static final String HOST = "localhost";
+	
+	// the file to be sent
 	private static final String FILE = "test.jpg";
 
+	// the specified port number
 	private int port_number;
+
+	// the specified host
+	private InetAddress host;
+
+	// the socket for sending
 	private DatagramSocket sending_sock = null;
+	
+	// the socket for recieving
 	private DatagramSocket recieving_sock = null;
+	
+	// for printing debug
 	private boolean debug = true;
 
-	// private FileInputStream file_reader;
+	// for reading the file to send in
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
-	private InetAddress host;
+	
 
 	public Sender1b(String host, int port_number) {
 		this.port_number = port_number;
 		try {
-			this.host = InetAddress.getByName(Sender1b.HOST);
+			this.host = InetAddress.getByName(host);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
@@ -34,15 +49,26 @@ public class Sender1b {
 
 	public void send() {
 		try {
+			
 			sending_sock = new DatagramSocket();
 			recieving_sock = new DatagramSocket(port_number+1);
+			
 			// read in the image to be sent
 			FileInputStream file_input_stream = new FileInputStream(FILE);
 
-			int packet_length = 0; // the length of the current packet
-			short packet_number = 0; // we use a short, because it's two bytes
-			boolean last_packet = false; // notes whether this is the last packet to transfer
-			int num_bytes_sent = 0;
+			// the length of the current packet
+			int packet_length = 0; 
+			
+			// we use a short, because it's two bytes
+			short packet_number = 0; 
+			
+			// notes whether this is the last packet to transfer
+			boolean last_packet = false; 			
+			
+			// tracks number sent for debug
+			int num_bytes_sent = 0 ;
+			
+			// what's rempaining to be sent
 			int remaining_data = file_input_stream.available();
 			
 			// while there's still more packets to send
@@ -51,10 +77,14 @@ public class Sender1b {
 				//check what the remaining 
 				remaining_data = file_input_stream.available();
 				
-				// If the amount we have remaining is greater than the previous
+				// If the amount we have remaining is greater than packet size
 				if (remaining_data > MAXIMUM_PACKET_SIZE - 3) {
+					
+					// the packet size is the maximum
 					packet_length = MAXIMUM_PACKET_SIZE - 3;
-				} else {
+				
+				}else {
+					
 					// if less than max size, we make the packet smaller
 					packet_length = remaining_data;
 					last_packet = true;
@@ -68,7 +98,6 @@ public class Sender1b {
 				
 				num_bytes_sent += packet_length;
 
-				// Assigning values to the headers
 				
 				// add the packet number to header
 				byte[] header = ByteBuffer.allocate(2).putShort(packet_number)
@@ -135,7 +164,25 @@ public class Sender1b {
 	}
 
 	public static void main(String args[]) {
-		Sender1b sender1b = new Sender1b(Sender1b.HOST, 7777);
-		sender1b.send();
+		if(args.length == 2){ // valid arguments, specify host
+			
+			int port_number = Integer.parseInt(args[0]);;
+			String host = args[1];
+			Sender1b sender1b = new Sender1b(host, port_number);
+			sender1b.send();
+			
+		}else if (args.length == 1){ // valid arguments, default host
+			
+			int port_number = Integer.parseInt(args[0]);
+			Sender1b sender1b= new Sender1b(Sender1b.HOST, port_number);
+			sender1b.send();
+		
+		}else{ // invalid arguments
+			System.out.println(
+					"Usage: \n" +
+					" Sender1b <port number> <host> \n" +
+					"\n or for default localhost \n" +
+					" Sender1b <port number> ");
+		}
 	}
 }

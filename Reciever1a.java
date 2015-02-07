@@ -24,20 +24,29 @@ public class Reciever1a {
 	}
 
 	public void recieve() {
+		System.out.println("server starting");
 		try {
+			// Open a datagram socket on the specified port number to listen for packets
 			sock = new DatagramSocket(port_number);
-
-			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size of a buffer.
-
+			
+			// the maximum size of a buffer.
+			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; 
+			
+			// where the file will be stored and the file writed
 			File file = new File("recieved_image.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
 
-			DatagramPacket incoming_packet = new DatagramPacket(buffer,
-					buffer.length);
+			// the recieved packet
+			DatagramPacket incoming_packet = 
+					new DatagramPacket(buffer,buffer.length);
 
+			// a count of the number of bytes stored for debug
 			int num_bytes_recieved = 0;
 
+			// until we've seen the byte flag
 			while (true) {
+				
+				// recieve a new packet
 				sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 
@@ -55,6 +64,7 @@ public class Reciever1a {
 
 				num_bytes_recieved += data.length - 3;
 
+				// debug print statement
 				if (debug) {
 					System.out.println(" number of bytes recieved: "
 							+ num_bytes_recieved
@@ -63,7 +73,10 @@ public class Reciever1a {
 							+ "\n and the bit flag is " + last_packet
 							+ "\n ********************************");
 				}
+				
+				// if this is the last packet
 				if (last_packet == 1) {
+					// finish writing the file and exit
 					file_output_stream.close();
 					System.exit(1);
 				}
@@ -74,8 +87,25 @@ public class Reciever1a {
 	}
 
 	public static void main(String args[]) throws Exception {
-		Reciever1a reciever1a = new Reciever1a(Reciever1a.HOST, 7777);
-		System.out.println("server starting");
-		reciever1a.recieve();
+		if(args.length == 2){ // valid arguments, specify host
+			
+			int port_number = Integer.parseInt(args[0]);
+			String host = args[1];
+			Reciever1a reciever1a = new Reciever1a(host, port_number);
+			reciever1a.recieve();
+		
+		}else if (args.length == 1){ // valid arguments, default host
+		
+			int port_number = Integer.parseInt(args[0]);
+			Reciever1a reciever1a = new Reciever1a(Reciever1a.HOST, port_number);
+			reciever1a.recieve();
+		
+		}else{ // invalid arguments
+			System.out.println(
+					"Usage: \n" +
+					" Reciever1a <port number> <host> \n" +
+					"\n or for default localhost \n" +
+					" Reciever1a <port number> ");
+		}
 	}
 }

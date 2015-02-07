@@ -25,7 +25,7 @@ public class Reciever1b {
 	public Reciever1b(String host_name, int port_number) {
 		this.port_number = port_number;
 		try {
-			this.host = InetAddress.getByName(Reciever1b.HOST);
+			this.host = InetAddress.getByName(host_name);
 		} catch (Exception e) {
 			System.out.print(e);
 		}
@@ -33,14 +33,30 @@ public class Reciever1b {
 	}
 
 	public void recieve() {
+		System.out.print("Reciever Starting");
 		try {
+			
+			// Open socket for recieving & listen on specified port
 			recieving_sock = new DatagramSocket(port_number);
+			
+			// Open socket for sending
 			sending_sock = new DatagramSocket();
-			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE]; // the maximum size
+			
+			// New buffer for holding incoming packets
+			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE];
+			
+			// The file and the new output stream
 			File file = new File("recieved_image_b.jpg");
 			FileOutputStream file_output_stream = new FileOutputStream(file);
+			
+			// New datagram packets
 			DatagramPacket incoming_packet = new DatagramPacket(buffer,	buffer.length);
+			
+			// keep track of bytes for 
 			int num_bytes_recieved = 0;
+			
+			// initialize to -1 (not a possible packet number)
+			// for no packets yet recieved
 			int last_packet_number = -1;
 
 			while (true) {
@@ -54,9 +70,14 @@ public class Reciever1b {
 				// identify the packet number
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
+				// if this packet has already been recieved
 				if (last_packet_number == packet_number){
+					// just send an ack
 					send_acknowledgement(packet_number);
+				
+				// if this is a new packet
 				}else{
+					
 					// find the flag byte
 					int last_packet = (int) data[2];
 
@@ -94,15 +115,34 @@ public class Reciever1b {
 	}
 
 	public void send_acknowledgement(short packet_number) throws Exception {
+		// put in a packet the ack'ed packet's num
 		byte[] data = new byte[2]; 
 		data = ByteBuffer.allocate(2).putShort(packet_number).array();
+		// send the ack to the sender
 		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number+1);
 		sending_sock.send(datagram_packet);
 	}
 
 	public static void main(String args[]) throws Exception {
-		Reciever1b reciever1b = new Reciever1b(Reciever1b.HOST, 7777);
-		System.out.println("server starting");
-		reciever1b.recieve();
+		if(args.length == 2){ // valid arguments, specify host
+			
+			int port_number = Integer.parseInt(args[0]);
+			String host = args[1];
+			Reciever1b reciever1b = new Reciever1b(host, port_number);
+			reciever1b.recieve();
+		
+		}else if (args.length == 1){ // valid arguments, default host
+		
+			int port_number = Integer.parseInt(args[0]);
+			Reciever1b reciever1b = new Reciever1b(Reciever1b.HOST, port_number);
+			reciever1b.recieve();
+		
+		}else{ // invalid arguments
+			System.out.println(
+					"Usage: \n" +
+					" Reciever1b <port number> <host> \n" +
+					" or for default localhost \n" +
+					" Reciever1b <port number> ");
+		}
 	}
 }

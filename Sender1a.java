@@ -2,18 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
 
-/**
- * 
- * @author alex
- *	requirements:
- *		* transfer from the sender to the reciever on localhost
- *		* UDP
- *		* 10Mbps bandwidth
- *		* 10Ms one-way propagation delay
- *		* 0% loss
- *		* 16 message sequence number
- *		* byte flag for end of message
- */
+
 public class Sender1a {
 	//server for 1a.
 	
@@ -30,14 +19,20 @@ public class Sender1a {
 	//private FileInputStream file_reader;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 	
-	public Sender1a(String host, int port_number){
+	public Sender1a(String host_name, int port_number){
 		this.port_number = port_number;
+		
+		try {
+			this.host = InetAddress.getByName(host_name);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
 	}
 	
 	public void send (){
 		try {
 			sock = new DatagramSocket();
-			InetAddress host = InetAddress.getByName(Sender1a.HOST);
+			
 			
 			// read in the image to be sent
 			FileInputStream file_input_stream = new FileInputStream(FILE);
@@ -89,7 +84,25 @@ public class Sender1a {
 	}
 	
 	public static void main(String args[]){
-		Sender1a sender1a = new Sender1a(Sender1a.HOST, 7777);
-		sender1a.send();
+		if(args.length == 2){ // valid arguments, specify host
+			
+			int port_number = Integer.parseInt(args[0]);
+			String host = args[1];
+			Sender1a sender1a = new Sender1a(host, port_number);
+			sender1a.send();
+			
+		}else if (args.length == 1){ // valid arguments, default host
+			
+			int port_number = Integer.parseInt(args[0]);
+			Sender1a sender1a= new Sender1a(Sender1a.HOST, port_number);
+			sender1a.send();
+		
+		}else{ // invalid arguments
+			System.out.println(
+					"Usage: \n" +
+					" Sender1a <port number> <host> \n" +
+					"\n or for default localhost \n" +
+					" Sender1a <port number> ");
+		}
 	}
 }
