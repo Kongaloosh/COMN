@@ -158,7 +158,7 @@ public class Sender2b {
 				DatagramPacket incoming_packet = new DatagramPacket(buffer,
 						buffer.length);
 				try {
-					recieving_sock.setSoTimeout(5);
+					recieving_sock.setSoTimeout(retry_timeout);
 					recieving_sock.receive(incoming_packet);
 					byte[] data = incoming_packet.getData();
 					acked_packet_num = ByteBuffer.wrap(data).getShort();
