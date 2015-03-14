@@ -106,7 +106,9 @@ public class Sender2a {
 									+ "\n number of packets sent: " + packet_number
 									+ "\n packet length:  " + packet_length
 									+ "\n number of retransmissions: " + retransmissions
-									+ "\n transmission rate: " + ((System.currentTimeMillis() - starttime) / num_bytes_sent) / 1000
+									+ "\n time: " + starttime
+									+ "\n time delta: " + (System.currentTimeMillis() - starttime) 
+									+ "\n transmission rate: " + ((float) (System.currentTimeMillis() - starttime) / 1000)/num_bytes_sent
 									+ "\n remaining data: " + remaining_data
 									+ "\n last packet: " + acked_packet_num
 									+ "\n ********************************");
@@ -119,6 +121,7 @@ public class Sender2a {
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet current_packet = acknowledged_packets.get(i);
 				if (current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
+					System.out.println("re-sending " + current_packet.number);
 					sending_sock.send(current_packet.data);
 					acknowledged_packets.get(i).time_sent = System
 							.currentTimeMillis();
@@ -148,13 +151,13 @@ public class Sender2a {
 				DatagramPacket incoming_packet = new DatagramPacket(buffer,
 						buffer.length);
 				try {
-					recieving_sock.setSoTimeout(5);
+					recieving_sock.setSoTimeout(retry_timeout);
 					recieving_sock.receive(incoming_packet);
 					byte[] data = incoming_packet.getData();
 					acked_packet_num = ByteBuffer.wrap(data).getShort();
-					//System.out.println("AckedPacket " + acked_packet_num);
+					System.out.println("AckedPacket " + acked_packet_num);
 				} catch (SocketTimeoutException ste) {
-					//System.out.println("Socket Timedout waiting for a response");
+					System.out.println("Socket Timedout waiting for a response");
 				} catch (IOException io) {
 					System.out.println(io);
 				}

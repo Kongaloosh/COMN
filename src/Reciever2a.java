@@ -95,6 +95,7 @@ public class Reciever2a {
 		data = ByteBuffer.allocate(2).putShort(packet_number).array();
 		DatagramPacket datagram_packet = new DatagramPacket(data, data.length, host, port_number+1);
 		sending_sock.send(datagram_packet);
+		System.out.println("acking: " + packet_number);
 	}
 
 	public static void main(String args[]) throws Exception {
