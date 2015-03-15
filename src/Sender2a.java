@@ -73,7 +73,7 @@ public class Sender2a {
 					&& acknowledged_packets.get(0).number < acked_packet_num) {
 				acknowledged_packets.remove(0);
 			}
-
+	
 			/**
 			 * While we still have room in our window, send packets
 			 */

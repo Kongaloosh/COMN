@@ -66,7 +66,7 @@ public class Reciever2b {
 				byte[] header = Arrays.copyOfRange(data, 0, 2);
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
-				if (packet_number < last_packet_number) { // we've already seen this packet
+				if (packet_number <= last_packet_number) { // we've already seen this packet
 					send_acknowledgement(packet_number);
 
 				} else if(packet_number == last_packet_number+1){ // this is the next packet
