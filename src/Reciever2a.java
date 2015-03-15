@@ -61,7 +61,7 @@ public class Reciever2a {
 
 				if (last_packet_number >= packet_number){
 					send_acknowledgement(packet_number);
-				}else{
+				}else if (last_packet_number+1 == packet_number){
 					
 					int last_packet = (int) data[2];
 					file_output_stream.write(data, 3, data.length - 3);
@@ -82,8 +82,8 @@ public class Reciever2a {
 						file_output_stream.close();
 						System.exit(1);
 					}
+					last_packet_number = packet_number;
 				}
-				last_packet_number = packet_number;
 			}
 		} catch (Exception e) {
 			System.out.println(e);
