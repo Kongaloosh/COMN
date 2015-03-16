@@ -72,7 +72,8 @@ public class Reciever2a {
 								+ num_bytes_recieved
 								+ "\n recieved packet number: " + packet_number
 								+ "\n of length " + (data.length - 3)
-								+ "\n and the bit flag is " + last_packet
+								+ "\n and the bit flag is: " + last_packet
+								+ "\n and my last packet was: " + last_packet_number
 								+ "\n ********************************");
 					}
 					

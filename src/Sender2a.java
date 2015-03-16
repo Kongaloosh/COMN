@@ -30,7 +30,7 @@ public class Sender2a {
 	private boolean debug = true;
 
 	private int retransmissions = 0;
-	private int starttime = 0;
+	private long starttime = 0;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 
 	private ArrayList<Packet> acknowledged_packets = new ArrayList<Packet>();
@@ -48,7 +48,7 @@ public class Sender2a {
 		this.host_name = host_name;
 		this.file_name = file_name;
 		this.retry_timeout = retry_timeout;
-		this.starttime = (int) System.currentTimeMillis();
+		this.starttime = System.currentTimeMillis();
 		this.host = InetAddress.getByName(host_name);
 		this.window_size = window_size;
 	}
@@ -70,7 +70,7 @@ public class Sender2a {
 			 * if we've acked a packet, add remove it and any packets which are before it
 			 */
 			while (acknowledged_packets.size() > 0
-					&& acknowledged_packets.get(0).number < acked_packet_num) {
+					&& acknowledged_packets.get(0).number <= acked_packet_num) {
 				acknowledged_packets.remove(0);
 			}
 	
@@ -107,8 +107,8 @@ public class Sender2a {
 									+ "\n packet length:  " + packet_length
 									+ "\n number of retransmissions: " + retransmissions
 									+ "\n time: " + starttime
-									+ "\n time delta: " + (System.currentTimeMillis() - starttime) 
-									+ "\n transmission rate: " + ((float) (System.currentTimeMillis() - starttime) / 1000)/num_bytes_sent
+									+ "\n time delta: " + (System.currentTimeMillis() - starttime) /1000.0 
+									+ "\n transmission rate: " + num_bytes_sent/ ((float) (System.currentTimeMillis() - starttime) / 1000.0)
 									+ "\n remaining data: " + remaining_data
 									+ "\n last packet: " + acked_packet_num
 									+ "\n ********************************");
@@ -121,7 +121,6 @@ public class Sender2a {
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet current_packet = acknowledged_packets.get(i);
 				if (current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
-					System.out.println("re-sending " + current_packet.number);
 					sending_sock.send(current_packet.data);
 					acknowledged_packets.get(i).time_sent = System
 							.currentTimeMillis();
@@ -130,7 +129,7 @@ public class Sender2a {
 					acknowledged_packets.add(current_packet);
 				}
 			}
-			if (acknowledged_packets.size() == 0 ) {
+			if (acknowledged_packets.size() == 0) {
 				stop = true;
 			}
 		}
@@ -155,9 +154,8 @@ public class Sender2a {
 					recieving_sock.receive(incoming_packet);
 					byte[] data = incoming_packet.getData();
 					acked_packet_num = ByteBuffer.wrap(data).getShort();
-					System.out.println("AckedPacket " + acked_packet_num);
 				} catch (SocketTimeoutException ste) {
-					System.out.println("Socket Timedout waiting for a response");
+					//System.out.println("Socket Timedout waiting for a response");
 				} catch (IOException io) {
 					System.out.println(io);
 				}

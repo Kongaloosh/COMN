@@ -30,7 +30,7 @@ public class Sender2b {
 	private boolean debug = true;
 
 	private int retransmissions = 0;
-	private int starttime = 0;
+	private long starttime = 0;
 	BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
 
 	private ArrayList<Packet> acknowledged_packets = new ArrayList<Packet>();
@@ -48,7 +48,7 @@ public class Sender2b {
 		this.host_name = host_name;
 		this.file_name = file_name;
 		this.retry_timeout = retry_timeout;
-		this.starttime = (int) System.currentTimeMillis();
+		this.starttime = System.currentTimeMillis();
 		this.host = InetAddress.getByName(host_name);
 		this.window_size = window_size;
 	}
@@ -118,11 +118,16 @@ public class Sender2b {
 									+ "\n number of packets sent: " + packet_number
 									+ "\n packet length:  " + packet_length
 									+ "\n number of retransmissions: " + retransmissions
-									+ "\n transmission rate: " + ((System.currentTimeMillis() - starttime) / num_bytes_sent) / 1000
+									+ "\n time delta: " + ((System.currentTimeMillis() - starttime)/ 1000.0)
+									+ "\n transmission rate: " + (num_bytes_sent)/((System.currentTimeMillis() - starttime)/ 1000.0)
 									+ "\n remaining data: " + remaining_data
 									+ "\n last packet: " + acked_packet_num
+									+ "\n packet_buff_size: " + acknowledged_packets.size()
 									+ "\n ********************************");
 				packet_number++;
+				if (remaining_data == 0) {
+					System.exit(0);
+				}
 			}
 			
 			/**

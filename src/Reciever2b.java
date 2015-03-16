@@ -69,10 +69,11 @@ public class Reciever2b {
 				if (packet_number <= last_packet_number) { // we've already seen this packet
 					send_acknowledgement(packet_number);
 
-				} else if(packet_number == last_packet_number+1){ // this is the next packet
+				} else if(packet_number == last_packet_number+1 ){ // this is the next packet
 					last_packet = (int) data[2];
 					file_output_stream.write(data, 3, data.length - 3);
 					num_bytes_recieved += data.length - 3;
+					System.out.println("direct " + packet_number + " after " + last_packet_number);
 					last_packet_number = packet_number;
 					send_acknowledgement(packet_number);
 				
@@ -87,32 +88,37 @@ public class Reciever2b {
 						public int compare(Packet o1, Packet o2) {
 							return o1.number - o2.number;
 						}
-					});
-	
+					});	
 					num_bytes_recieved += data.length - 3;
-					send_acknowledgement(packet_number);
 					
 					/**
 					 * pop the elements in the buffer which match 
 					 * where we need continue writing
-					 */
-					while (recieved_packets.get(0).number == last_packet_number +1) {
-						Packet packet = recieved_packets.get(0);
-						recieved_packets.remove(0);
-						last_packet_number = packet.number;
-						file_output_stream.write(packet.data, 3, packet.data.length - 3);
-					}
+					*/
 				}
-
+				
+				for (int i = 0; i < recieved_packets.size(); i++) {
+					System.out.println(recieved_packets.size());
+				}
+				while ( recieved_packets.size() > 0 && recieved_packets.get(0).number == last_packet_number +1) {
+					Packet packet = recieved_packets.get(0);
+					recieved_packets.remove(0);
+					System.out.println("popped " + packet_number + " after " + last_packet_number);
+					last_packet_number = packet.number;
+					file_output_stream.write(packet.data, 3, packet.data.length - 3);
+				}
+				
 				if (debug) {
 					System.out.println(" number of bytes recieved: "
 							+ num_bytes_recieved
 							+ "\n recieved packet number: " + packet_number
 							+ "\n of length " + (data.length - 3)
+							+ "\n the last packet was: " + last_packet_number
 							+ "\n and the bit flag is " + last_packet
+							+ "\n the buffer is " + recieved_packets.size()
 							+ "\n ********************************");
 				}
-
+				
 				send_acknowledgement(packet_number);
 
 				if (last_packet == 1) {
