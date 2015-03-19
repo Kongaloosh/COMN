@@ -8,6 +8,7 @@ import org.omg.CORBA.PUBLIC_MEMBER;
 /**
  * s1210313
  * Go back N for COMN 2014/2015
+ * 
  */
 public class Sender2a {
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
@@ -76,7 +77,7 @@ public class Sender2a {
 			/**
 			 * While we still have room in our window, send packets
 			 */
-			while (window_size > acknowledged_packets.size()) {
+			while (window_size > acknowledged_packets.size() && !last_packet) {
 				remaining_data = file_input_stream.available();
 				
 				if (remaining_data > MAXIMUM_PACKET_SIZE - 3) {
@@ -123,19 +124,17 @@ public class Sender2a {
 			/**
 			 * Check to see if we need to re-transmit
 			 */
-			for (int i = 0; i < acknowledged_packets.size(); i++) {
-				Packet current_packet = acknowledged_packets.get(i);
-
-				if (current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
-
+			
+			if(acknowledged_packets.size() > 0 && acknowledged_packets.get(0).time_sent + retry_timeout <= System.currentTimeMillis()){
+				for (int i = 0; i < acknowledged_packets.size(); i++) {
+					Packet current_packet = acknowledged_packets.get(i);
 					sending_sock.send(current_packet.data);
-					acknowledged_packets.get(i).time_sent = System
-							.currentTimeMillis();
+					acknowledged_packets.get(i).time_sent = System.currentTimeMillis();
 					current_packet.time_sent = System.currentTimeMillis();
 					acknowledged_packets.set(i, current_packet);
 				}
 			}
-			// if it's been 10 seconds after we've finished timer, end
+						// if it's been 10 seconds after we've finished timer, end
 			if (timer > 0 && (System.currentTimeMillis() - timer) / 1000 >= 10) {
 				stop = true;
 				System.exit(0);
