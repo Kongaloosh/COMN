@@ -149,7 +149,7 @@ public class Reciever2b2 {
 		/**
 		 * java ReceiverX <Port> <Filename>
 		 */
-		if (args.length == 2) { // valid arguments, specify host
+		if (args.length == 3) { // valid arguments, specify host
 
 			int port_number = Integer.parseInt(args[0]);
 			String file_name = args[1];
@@ -158,7 +158,7 @@ public class Reciever2b2 {
 
 		} else { // invalid arguments
 			System.out.println("Usage: \n"
-					+ "java Receiver1b <Port> <Filename>");
+					+ "java Receiver1b <Port> <Filename> [WindowSize]");
 		}
 	}
 

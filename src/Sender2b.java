@@ -3,17 +3,11 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import org.omg.CORBA.PUBLIC_MEMBER;
-
-/*
- *  Part 1b for assignment COMN --- based on RDT3.0
- * 
- *  * implement a timer
- *  	- keep track of the time of the last unacked packet
- *  	- if the current time is after that period, retransmit everything.
- *  	- is it everything, or only that one?
- */
+// s1210313
 public class Sender2b {
-	// server for 1b.
+	/**
+	 * Sender for Selective Repeat COMN coursework 2014/2015
+	 */
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	private static final String HOST = "localhost";
 
@@ -64,10 +58,13 @@ public class Sender2b {
 
 		Acknowledge acknowledge = new Acknowledge(port_number);
 		acknowledge.start();
-
+		
+		/**
+		 * While the file hasn't been fully transferred
+		 */
 		while (!stop) {
 			/**
-			 * if we've acked a packet, add remove it and any packets which are before it
+			 * Flip an acked packet
 			 */
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet packet = acknowledged_packets.get(i);
@@ -90,6 +87,7 @@ public class Sender2b {
 			 * While we still have room in our window, send packets
 			 */
 			while (window_size > acknowledged_packets.size()) {
+				
 				remaining_data = file_input_stream.available();
 				if (remaining_data > MAXIMUM_PACKET_SIZE - 3) {
 					packet_length = MAXIMUM_PACKET_SIZE - 3;
@@ -97,6 +95,7 @@ public class Sender2b {
 					packet_length = remaining_data;
 					last_packet = true;
 				}
+				
 				byte[] data = new byte[packet_length + 3];
 				file_input_stream.read(data, 3, packet_length);
 				num_bytes_sent += packet_length;
@@ -109,6 +108,8 @@ public class Sender2b {
 				DatagramPacket datagram_packet = new DatagramPacket(data,
 						data.length, host, port_number);
 				sending_sock.send(datagram_packet);
+				
+				// add packets to the buffer of waiting to be acknowledged
 				acknowledged_packets.add(new Packet(packet_number,
 						datagram_packet, System.currentTimeMillis()));
 
@@ -125,9 +126,6 @@ public class Sender2b {
 									+ "\n packet_buff_size: " + acknowledged_packets.size()
 									+ "\n ********************************");
 				packet_number++;
-				if (remaining_data == 0) {
-					System.exit(0);
-				}
 			}
 			
 			/**
@@ -135,19 +133,30 @@ public class Sender2b {
 			 */
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet current_packet = acknowledged_packets.get(i);
+				
 				if (!current_packet.acked &&
 						current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
+					
 					sending_sock.send(current_packet.data);
-					acknowledged_packets.get(i).time_sent = System
-							.currentTimeMillis();
+					acknowledged_packets.get(i).time_sent = System.currentTimeMillis();
 					current_packet.time_sent = System.currentTimeMillis();
-					acknowledged_packets.remove(i);
-					acknowledged_packets.add(current_packet);
+					acknowledged_packets.set(i, current_packet);
 				}
+			}
+			/**
+			 * If we've transferred everything, and there's one packet left to be acked or less, quit
+			 */
+			if (remaining_data == 0 && acknowledged_packets.size() <= 1) {
+				System.out.println("transfer finished.");
+				stop == true;
+				System.exit(0);
 			}
 		}
 	}
 
+	/**
+	 * Thread to manage acknowledgements
+	 */
 	public class Acknowledge extends Thread {
 
 		private DatagramSocket recieving_sock = null;
@@ -158,7 +167,9 @@ public class Sender2b {
 		
 		@Override
 		public void run() {
+			
 			while (!stop) {
+				
 				byte[] buffer = new byte[2];
 				DatagramPacket incoming_packet = new DatagramPacket(buffer,
 						buffer.length);
@@ -167,13 +178,12 @@ public class Sender2b {
 					recieving_sock.receive(incoming_packet);
 					byte[] data = incoming_packet.getData();
 					acked_packet_num = ByteBuffer.wrap(data).getShort();
-					//System.out.println("AckedPacket " + acked_packet_num);
 				} catch (SocketTimeoutException ste) {
-					//System.out.println("Socket Timedout waiting for a response");
+				
 				} catch (IOException io) {
 					System.out.println(io);
 				}
-				Thread.yield();
+				Thread.yield(); // yield so we can send
 			}
 		}
 	}
