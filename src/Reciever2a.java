@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 /**
+ * Reciever for Go-Back-N COMN 2014/15
  * Matric Number: s1210313
  */
 public class Reciever2a {
@@ -34,9 +35,10 @@ public class Reciever2a {
 	}
 
 	public void recieve() {
+		
 		System.out.print("Reciever Starting");
-		try {
-			
+		
+		try {	
 			recieving_sock = new DatagramSocket(port_number);
 			sending_sock = new DatagramSocket();
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE];
@@ -45,8 +47,12 @@ public class Reciever2a {
 			DatagramPacket incoming_packet = new DatagramPacket(buffer,	buffer.length);
 			int num_bytes_recieved = 0;
 			int last_packet_number = -1;
-
+			
+			/**
+			 * While we haven't recieved all packets
+			 */
 			while (true) {
+				
 				recieving_sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 				
@@ -59,8 +65,11 @@ public class Reciever2a {
 				byte[] header = Arrays.copyOfRange(data, 0, 2);
 				short packet_number = ByteBuffer.wrap(header).getShort();
 
+				// If we've already seen this packet before
 				if (last_packet_number >= packet_number){
 					send_acknowledgement(packet_number);
+					
+				// If this is the next packet in sequence
 				}else if (last_packet_number+1 == packet_number){
 					
 					int last_packet = (int) data[2];
@@ -68,8 +77,8 @@ public class Reciever2a {
 					num_bytes_recieved += data.length - 3;
 					
 					if (debug) {
-						System.out.println(" number of bytes recieved: "
-								+ num_bytes_recieved
+						System.out.println(
+								" number of bytes recieved: " + num_bytes_recieved
 								+ "\n recieved packet number: " + packet_number
 								+ "\n of length " + (data.length - 3)
 								+ "\n and the bit flag is: " + last_packet
@@ -78,11 +87,13 @@ public class Reciever2a {
 					}
 					
 					send_acknowledgement(packet_number);
-
+					
+					// if this is the last packet
 					if (last_packet == 1) {
 						file_output_stream.close();
 						System.exit(1);
 					}
+					// move ahead one packet
 					last_packet_number = packet_number;
 				}
 			}
@@ -90,7 +101,10 @@ public class Reciever2a {
 			System.out.println(e);
 		}
 	}
-
+	
+	/**
+	 * Sends an acknowledgement for a specified packet number
+	 */
 	public void send_acknowledgement(short packet_number) throws Exception {
 		byte[] data = new byte[2]; 
 		data = ByteBuffer.allocate(2).putShort(packet_number).array();

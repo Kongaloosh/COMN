@@ -4,19 +4,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import org.omg.CORBA.PUBLIC_MEMBER;
 
-/*
- *  Part 1b for assignment COMN --- based on RDT3.0
- * 
- *  * implement a timer
- *  	- keep track of the time of the last unacked packet
- *  	- if the current time is after that period, retransmit everything.
- *  	- is it everything, or only that one?
+/**
+ * s1210313
+ * Go back N for COMN 2014/2015
  */
 public class Sender2a {
-	// server for 1b.
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	private static final String HOST = "localhost";
-
 	private static final String FILE = "test.jpg";
 
 	private int port_number;
@@ -64,10 +58,12 @@ public class Sender2a {
 
 		Acknowledge acknowledge = new Acknowledge(port_number);
 		acknowledge.start();
-
+		/**
+		 * While the file hasn't finished being transferred
+		 */
 		while (!stop) {
 			/**
-			 * if we've acked a packet, add remove it and any packets which are before it
+			 * if we've acked a packet, remove it and any packets which are before it
 			 */
 			while (acknowledged_packets.size() > 0
 					&& acknowledged_packets.get(0).number <= acked_packet_num) {
@@ -79,26 +75,29 @@ public class Sender2a {
 			 */
 			while (window_size > acknowledged_packets.size()) {
 				remaining_data = file_input_stream.available();
+				
 				if (remaining_data > MAXIMUM_PACKET_SIZE - 3) {
 					packet_length = MAXIMUM_PACKET_SIZE - 3;
 				} else {
 					packet_length = remaining_data;
 					last_packet = true;
 				}
+				
 				byte[] data = new byte[packet_length + 3];
 				file_input_stream.read(data, 3, packet_length);
 				num_bytes_sent += packet_length;
-				byte[] header = ByteBuffer.allocate(2).putShort(packet_number)
-						.array();
+				byte[] header = ByteBuffer.allocate(2).putShort(packet_number).array();
 				data[0] = header[0];
 				data[1] = header[1];
 				data[2] = (byte) (last_packet ? 1 : 0);
 
-				DatagramPacket datagram_packet = new DatagramPacket(data,
-						data.length, host, port_number);
+				DatagramPacket datagram_packet = 
+						new DatagramPacket(data, data.length, host, port_number);
 				sending_sock.send(datagram_packet);
-				acknowledged_packets.add(new Packet(packet_number,
-						datagram_packet, System.currentTimeMillis()));
+				
+				acknowledged_packets.add(
+						new Packet(packet_number, datagram_packet, System.currentTimeMillis())
+						);
 
 				if (debug)
 					System.out
@@ -111,6 +110,7 @@ public class Sender2a {
 									+ "\n transmission rate: " + num_bytes_sent/ ((float) (System.currentTimeMillis() - starttime) / 1000.0)
 									+ "\n remaining data: " + remaining_data
 									+ "\n last packet: " + acked_packet_num
+									+ "\n buffer size: " + acknowledged_packets.size() 
 									+ "\n ********************************");
 				packet_number++;
 			}
@@ -120,33 +120,43 @@ public class Sender2a {
 			 */
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet current_packet = acknowledged_packets.get(i);
+				System.out.println(
+						"\n packet: " + current_packet.number 
+						);
 				if (current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
+					System.out.println("True!");
 					sending_sock.send(current_packet.data);
 					acknowledged_packets.get(i).time_sent = System
 							.currentTimeMillis();
 					current_packet.time_sent = System.currentTimeMillis();
-					acknowledged_packets.remove(i);
-					acknowledged_packets.add(current_packet);
+					acknowledged_packets.set(i, current_packet);
 				}
 			}
-			if (acknowledged_packets.size() == 0) {
+			System.out.println("\n ==================================");
+			if (remaining_data == 0) {
 				stop = true;
+				System.exit(0);
 			}
 		}
 	}
-
+	
+	/**
+	 * Thread to manage acknowledgement
+	 */
 	public class Acknowledge extends Thread {
 
 		private DatagramSocket recieving_sock = null;
-
 		public Acknowledge(int port_number) throws Exception {
 			recieving_sock = new DatagramSocket(port_number + 1);
 		}
 		
 		@Override
 		public void run() {
+			
 			while (!stop) {
+	
 				byte[] buffer = new byte[2];
+			
 				DatagramPacket incoming_packet = new DatagramPacket(buffer,
 						buffer.length);
 				try {
@@ -154,8 +164,9 @@ public class Sender2a {
 					recieving_sock.receive(incoming_packet);
 					byte[] data = incoming_packet.getData();
 					acked_packet_num = ByteBuffer.wrap(data).getShort();
+				
 				} catch (SocketTimeoutException ste) {
-					//System.out.println("Socket Timedout waiting for a response");
+	
 				} catch (IOException io) {
 					System.out.println(io);
 				}
