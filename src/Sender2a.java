@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.util.ArrayList;
 import org.omg.CORBA.PUBLIC_MEMBER;
 
@@ -34,6 +35,8 @@ public class Sender2a {
 
 	boolean last_packet = false;
 	boolean stop = false;
+	
+	private long timer;
 	
 	public Sender2a(String host_name, int port_number, String file_name,
 			int retry_timeout, int window_size) throws Exception {
@@ -81,6 +84,8 @@ public class Sender2a {
 				} else {
 					packet_length = remaining_data;
 					last_packet = true;
+					System.out.println("transfer finished.");
+					timer = System.currentTimeMillis();
 				}
 				
 				byte[] data = new byte[packet_length + 3];
@@ -120,11 +125,9 @@ public class Sender2a {
 			 */
 			for (int i = 0; i < acknowledged_packets.size(); i++) {
 				Packet current_packet = acknowledged_packets.get(i);
-				System.out.println(
-						"\n packet: " + current_packet.number 
-						);
+
 				if (current_packet.time_sent + retry_timeout <= System.currentTimeMillis()) {
-					System.out.println("True!");
+
 					sending_sock.send(current_packet.data);
 					acknowledged_packets.get(i).time_sent = System
 							.currentTimeMillis();
@@ -132,8 +135,8 @@ public class Sender2a {
 					acknowledged_packets.set(i, current_packet);
 				}
 			}
-			System.out.println("\n ==================================");
-			if (remaining_data == 0) {
+			// if it's been 10 seconds after we've finished timer, end
+			if (timer > 0 && (System.currentTimeMillis() - timer) / 1000 >= 10) {
 				stop = true;
 				System.exit(0);
 			}
