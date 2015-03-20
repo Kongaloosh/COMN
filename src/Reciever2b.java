@@ -17,7 +17,9 @@ import java.util.Iterator;
  * Matric Number: s1210313
  */
 public class Reciever2b {
-
+/**
+ *  Selective Repeat for University of Edinburgh COMN course 2014/2015
+ */
 	public static final int MAXIMUM_PACKET_SIZE = 1024;
 	public static final String HOST = "localhost";
 
@@ -40,8 +42,8 @@ public class Reciever2b {
 
 	public void recieve() {
 		System.out.print("Reciever Starting");
+		
 		try {
-
 			recieving_sock = new DatagramSocket(port_number);
 			sending_sock = new DatagramSocket();
 			byte[] buffer = new byte[MAXIMUM_PACKET_SIZE];
@@ -54,6 +56,11 @@ public class Reciever2b {
 			int last_packet = -1;
 			
 			while (true) {
+				// until we recieve the last packet and shut-down
+				
+				/**
+				 * PACKET RECIEVING AND PROCESSING
+				 */
 				recieving_sock.receive(incoming_packet);
 				byte[] data = incoming_packet.getData();
 
@@ -65,19 +72,23 @@ public class Reciever2b {
 
 				byte[] header = Arrays.copyOfRange(data, 0, 2);
 				short packet_number = ByteBuffer.wrap(header).getShort();
-
-				if (packet_number <= last_packet_number) { // we've already seen this packet
+				
+				/**
+				 * BUFFERING AND ACKNOWLEDGEMENT
+				 */
+				if (packet_number <= last_packet_number) { // if we've already seen this packet...
+					//simply acknowledge the packet
 					send_acknowledgement(packet_number);
 
-				} else if(packet_number == last_packet_number+1 ){ // this is the next packet
+				} else if(packet_number == last_packet_number+1){ // if this is the next packet in sequence...
+					//write to the file and send an acknowledgement
 					last_packet = (int) data[2];
 					file_output_stream.write(data, 3, data.length - 3);
 					num_bytes_recieved += data.length - 3;
-					System.out.println("direct " + packet_number + " after " + last_packet_number);
 					last_packet_number = packet_number;
 					send_acknowledgement(packet_number);
 				
-				} else {	// we're out of sequence; buffer it
+				} else {// we've recieved a packet out of sequence; buffer it
 					/**
 					 * we sort the buffer of packets such that the
 					 * first one is always the oldest
@@ -88,40 +99,32 @@ public class Reciever2b {
 						public int compare(Packet o1, Packet o2) {
 							return o1.number - o2.number;
 						}
-					});	
+					});
 					num_bytes_recieved += data.length - 3;
+					send_acknowledgement(packet_number);
 					
 					/**
 					 * pop the elements in the buffer which match 
 					 * where we need continue writing
-					*/
+					 */
+					while (recieved_packets.size() > 0 && recieved_packets.get(0).number == last_packet_number +1) {
+						Packet packet = recieved_packets.get(0);
+						recieved_packets.remove(0);
+						last_packet_number = packet.number;
+						file_output_stream.write(packet.data, 3, packet.data.length - 3);
+					}
 				}
-				
-				for (int i = 0; i < recieved_packets.size(); i++) {
-					System.out.println(recieved_packets.size());
-				}
-				while ( recieved_packets.size() > 0 && recieved_packets.get(0).number == last_packet_number +1) {
-					Packet packet = recieved_packets.get(0);
-					recieved_packets.remove(0);
-					System.out.println("popped " + packet_number + " after " + last_packet_number);
-					last_packet_number = packet.number;
-					file_output_stream.write(packet.data, 3, packet.data.length - 3);
-				}
-				
+
 				if (debug) {
 					System.out.println(" number of bytes recieved: "
 							+ num_bytes_recieved
 							+ "\n recieved packet number: " + packet_number
 							+ "\n of length " + (data.length - 3)
-							+ "\n the last packet was: " + last_packet_number
 							+ "\n and the bit flag is " + last_packet
-							+ "\n the buffer is " + recieved_packets.size()
 							+ "\n ********************************");
 				}
-				
-				send_acknowledgement(packet_number);
 
-				if (last_packet == 1) {
+				if (last_packet == 1) { // if this is the last packet, close the file and exit
 					file_output_stream.close();
 					System.exit(1);
 				}
@@ -130,7 +133,10 @@ public class Reciever2b {
 			System.out.println(e);
 		}
 	}
-
+	
+	/**
+	 * Sends an packet containing the number of an acknowledged packet
+	 */
 	public void send_acknowledgement(short packet_number) throws Exception {
 		byte[] data = new byte[2];
 		data = ByteBuffer.allocate(2).putShort(packet_number).array();
@@ -143,7 +149,7 @@ public class Reciever2b {
 		/**
 		 * java ReceiverX <Port> <Filename>
 		 */
-		if (args.length == 2) { // valid arguments, specify host
+		if (args.length == 3) { // valid arguments, specify host
 
 			int port_number = Integer.parseInt(args[0]);
 			String file_name = args[1];
@@ -152,7 +158,7 @@ public class Reciever2b {
 
 		} else { // invalid arguments
 			System.out.println("Usage: \n"
-					+ "java Receiver1b <Port> <Filename>");
+					+ "java Receiver1b <Port> <Filename> [WindowSize]");
 		}
 	}
 

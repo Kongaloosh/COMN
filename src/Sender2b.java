@@ -35,6 +35,8 @@ public class Sender2b {
 	boolean last_packet = false;
 	boolean stop = false;
 	
+	private long timer;
+	
 	public Sender2b(String host_name, int port_number, String file_name,
 			int retry_timeout, int window_size) throws Exception {
 
@@ -86,7 +88,7 @@ public class Sender2b {
 			/**
 			 * While we still have room in our window, send packets
 			 */
-			while (window_size > acknowledged_packets.size()) {
+			while (window_size > acknowledged_packets.size() && !last_packet) {
 				
 				remaining_data = file_input_stream.available();
 				if (remaining_data > MAXIMUM_PACKET_SIZE - 3) {
@@ -94,6 +96,8 @@ public class Sender2b {
 				} else {
 					packet_length = remaining_data;
 					last_packet = true;
+					System.out.println("transfer finished.");
+					timer = System.currentTimeMillis();
 				}
 				
 				byte[] data = new byte[packet_length + 3];
@@ -114,6 +118,7 @@ public class Sender2b {
 						datagram_packet, System.currentTimeMillis()));
 
 				if (debug)
+					
 					System.out
 							.println("number of bytes sent: " + num_bytes_sent
 									+ "\n number of packets sent: " + packet_number
@@ -125,6 +130,7 @@ public class Sender2b {
 									+ "\n last packet: " + acked_packet_num
 									+ "\n packet_buff_size: " + acknowledged_packets.size()
 									+ "\n ********************************");
+				
 				packet_number++;
 			}
 			
@@ -146,8 +152,8 @@ public class Sender2b {
 			/**
 			 * If we've transferred everything, and there's one packet left to be acked or less, quit
 			 */
-			if (remaining_data == 0 && acknowledged_packets.size() <= 1) {
-				System.out.println("transfer finished.");
+			// if it's been 10 seconds after we've finished timer, end
+			if (timer > 0 && (System.currentTimeMillis() - timer) / 1000 >= 10) {
 				stop = true;
 				System.exit(0);
 			}
